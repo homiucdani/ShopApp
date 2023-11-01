@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">ShopApp</string>
+    <string name="add_to_cart">Add to cart</string>
+    <string name="my_cart">My Cart</string>
+    <string name="subtotal">Subtotal</string>
+    <string name="delivery">Delivery</string>
+    <string name="total_tax">Total tax</string>
+    <string name="total">Total</string>
+</resources>
