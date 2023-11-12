@@ -5,4 +5,7 @@ sealed class HomeEvent {
     data class OnCategoryClick(val categoryName: String) : HomeEvent()
     data class OnProductClick(val productId: Int) : HomeEvent()
     data class OnTabSelected(val index: Int) : HomeEvent()
+
+    data class SelectedBottomTab(val index: Int, val route:String) : HomeEvent()
+
 }

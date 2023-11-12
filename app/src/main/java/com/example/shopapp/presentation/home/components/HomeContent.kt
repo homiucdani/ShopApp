@@ -1,10 +1,12 @@
 package com.example.shopapp.presentation.home.components
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -12,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.shopapp.domain.model.Product
@@ -24,6 +27,7 @@ fun HomeContent(
     onCategorySelected: (String) -> Unit,
     onProductClick: (Product) -> Unit,
     selectedTab: Int,
+    isLoading: Boolean,
     onTabSelected: (Int) -> Unit
 ) {
 
@@ -63,6 +67,14 @@ fun HomeContent(
                 },
                 edgePadding = 0.dp,
             )
+        }
+
+        item {
+            if (isLoading){
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
         }
 
         when (selectedTab) {

@@ -19,6 +19,7 @@ import com.example.shopapp.presentation.home.HomeScreen
 import com.example.shopapp.presentation.home.HomeViewModel
 import com.example.shopapp.presentation.product_details.ProductDetailsScreen
 import com.example.shopapp.presentation.product_details.ProductDetailsViewModel
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun SetupNavGraph(
@@ -31,6 +32,9 @@ fun SetupNavGraph(
         home(
             navigateToDetailsProduct = { productId ->
                 navHostController.navigate(Screen.ProductDetails.passProductId(productId))
+            },
+            navigateToRoute = { route ->
+                navHostController.navigate(route)
             }
         )
 
@@ -54,7 +58,8 @@ fun SetupNavGraph(
 }
 
 fun NavGraphBuilder.home(
-    navigateToDetailsProduct: (Int) -> Unit
+    navigateToDetailsProduct: (Int) -> Unit,
+    navigateToRoute: (String) -> Unit
 ) {
     composable(
         route = Screen.Home.route
@@ -62,6 +67,18 @@ fun NavGraphBuilder.home(
 
         val homeViewModel: HomeViewModel = hiltViewModel()
         val state = homeViewModel.state.collectAsState().value
+
+        LaunchedEffect(key1 = state.selectedBottomTopIndex) {
+            homeViewModel.uiEvent.collectLatest { event ->
+                when (event) {
+                    is UiEvent.NavigateToRoute -> {
+                        navigateToRoute(event.route)
+                    }
+
+                    else -> Unit
+                }
+            }
+        }
 
         HomeScreen(
             state = state,
@@ -100,6 +117,7 @@ fun NavGraphBuilder.productDetails(
                     UiEvent.OnBackClick -> {
                         onBackClick()
                     }
+                    else -> Unit
                 }
             }
         }

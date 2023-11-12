@@ -10,7 +10,7 @@ import android.os.Build
 import com.example.shopapp.R
 import com.example.shopapp.core.util.Constants
 import com.example.shopapp.domain.services.ShopNotification
-import com.example.shopapp.presentation.main.MainActivity
+import com.example.shopapp.MainActivity
 
 class ShopNotificationImpl(
     private val app: Application

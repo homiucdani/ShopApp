@@ -1,14 +1,16 @@
 package com.example.shopapp.presentation.home
 
-import android.util.Log
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.shopapp.core.util.Constants
+import com.example.shopapp.core.presentation.util.UiEvent
+import com.example.shopapp.domain.repository.LocalDataSource
 import com.example.shopapp.domain.repository.RemoteDataSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -18,33 +20,17 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val remoteDataSource: RemoteDataSource,
-    private val savedStateHandle: SavedStateHandle
+    private val localDataSource: LocalDataSource
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
     val state: StateFlow<HomeState> = _state
 
-    init {
-        getAllProducts()
-    }
+    private val _uiEvent = MutableSharedFlow<UiEvent>()
+    val uiEvent: SharedFlow<UiEvent> = _uiEvent
 
-    private fun getAllProducts() {
-        _state.update {
-            it.copy(
-                isLoading = true
-            )
-        }
-        viewModelScope.launch(Dispatchers.IO) {
-            val data = remoteDataSource.getAllProducts()
-            withContext(Dispatchers.Main) {
-                _state.update {
-                    it.copy(
-                        allProducts = data,
-                        isLoading = false
-                    )
-                }
-            }
-        }
+    init {
+        loadData()
     }
 
     fun onEvent(event: HomeEvent) {
@@ -56,8 +42,19 @@ class HomeViewModel @Inject constructor(
             is HomeEvent.OnTabSelected -> {
                 _state.update {
                     it.copy(
-                        selectedTabIndex = event.index
+                        selectedTopTabIndex = event.index
                     )
+                }
+            }
+
+            is HomeEvent.SelectedBottomTab -> {
+                viewModelScope.launch {
+                    _state.update {
+                        it.copy(
+                            selectedBottomTopIndex = event.index
+                        )
+                    }
+                    _uiEvent.emit(UiEvent.NavigateToRoute(route = event.route))
                 }
             }
 
@@ -65,14 +62,54 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private fun loadData() {
+        _state.update {
+            it.copy(
+                isLoading = true
+            )
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val deferredAllProducts = async { remoteDataSource.getAllProducts() }
+            val deferredCartItems = async { localDataSource.getAllCartItems() }
+
+            deferredAllProducts.await().run {
+                withContext(Dispatchers.Main) {
+                    _state.update {
+                        it.copy(
+                            allProducts = this@run,
+                            isLoading = false
+                        )
+                    }
+                }
+            }
+            deferredCartItems.await().collect { items ->
+                withContext(Dispatchers.Main) {
+                    _state.update {
+                        it.copy(
+                            cartItemSize = items.size
+                        )
+                    }
+                }
+            }
+
+        }
+    }
+
     private fun getSelectedCategoryProducts(category: String) {
+        _state.update {
+            it.copy(
+                isLoading = true
+            )
+        }
         viewModelScope.launch(Dispatchers.IO) {
             val data = remoteDataSource.getCategoryByName(category)
-            Log.d("TEST", "getSelectedCategoryProducts: $data")
+
             withContext(Dispatchers.Main) {
                 _state.update {
                     it.copy(
-                        singleCategory = data
+                        singleCategory = data,
+                        isLoading = false
                     )
                 }
             }
